@@ -130,7 +130,7 @@
     <h1>✨ 별난별 타로카드 ✨</h1> <br> 
 
     <div class="tarot-container">
-      <div class="card" onclick="flipCard(this)" data-message="새로운 인연이 다가옵니다.&#10;마음을 열고 기다려보세요." data-image="https://i.imgur.com/HRZrNvm.png">
+      <div class="card" onclick="flipCard(this, '카드1')" data-message="새로운 인연이 다가옵니다.&#10;마음을 열고 기다려보세요." data-image="https://i.imgur.com/HRZrNvm.png">
         <div class="card-inner">
           <div class="card-front">
             <img src="https://i.imgur.com/HRZrNvm.png" alt="카드1 앞면">
@@ -141,7 +141,7 @@
           </div>
         </div>
       </div>
-      <div class="card" onclick="flipCard(this)" data-message="행운지수가 상승하였습니다!&#10;예상치 못했던 수입이 들어올 수도 있습니다." data-image="https://i.imgur.com/NMbruAt.png">
+      <div class="card" onclick="flipCard(this, '카드2')" data-message="행운지수가 상승하였습니다!&#10;예상치 못했던 수입이 들어올 수도 있습니다." data-image="https://i.imgur.com/NMbruAt.png">
         <div class="card-inner">
           <div class="card-front">
             <img src="https://i.imgur.com/NMbruAt.png" alt="카드2 앞면">
@@ -152,7 +152,7 @@
           </div>
         </div>
       </div>
-      <div class="card" onclick="flipCard(this)" data-message="발 밑만 보며 걷다보면 예상치 못한 길로 갈 수 있습니다.&#10;멀리 보고 진행하시길!" data-image="https://i.imgur.com/OZB4t3N.png">
+      <div class="card" onclick="flipCard(this, '카드3')" data-message="발 밑만 보며 걷다보면 예상치 못한 길로 갈 수 있습니다.&#10;멀리 보고 진행하시길!" data-image="https://i.imgur.com/OZB4t3N.png">
         <div class="card-inner">
           <div class="card-front">
             <img src="https://i.imgur.com/OZB4t3N.png" alt="카드3 앞면">
@@ -178,7 +178,12 @@
     let selectedCard = null;
     let selectedCardData = null;
 
-    function flipCard(card) {
+    // 페이지 로드 시 방문 기록
+    document.addEventListener('DOMContentLoaded', function() {
+      trackEvent('페이지 방문');
+    });
+
+    function flipCard(card, cardName) {
       const isFlipped = card.classList.contains('flipped');
 
       if (!selectedCard) {
@@ -189,6 +194,9 @@
           image: card.dataset.image
         };
         disableOtherCards(card);
+        
+        // 카드 선택 이벤트 기록
+        trackEvent('카드 선택', { 카드명: cardName });
       } else if (card === selectedCard) {
         card.classList.toggle('flipped');
       } else {
@@ -207,8 +215,10 @@
     }
 
     function goToStart() {
-      console.log("처음으로 버튼 클릭됨"); // 디버깅을 위해 추가
-      window.location.href = "index.html"; // 이동하려는 페이지 URL
+      trackEvent('처음으로 버튼 클릭');
+      setTimeout(() => {
+        window.location.href = "https://kimjiwoow.github.io/-/";
+      }, 500); // 로그 전송 후 이동
     }
 
     async function createShareImage() {
@@ -277,10 +287,6 @@
         img.src = selectedCardData.image;
       });
     }
-function goToStart() {
-  console.log("처음으로 버튼 클릭됨"); // 디버깅을 위해 추가
-  window.location.href = "https://kimjiwoow.github.io/-/"; // 원하는 URL로 이동
-}
 
     // 구식 브라우저용 클립보드 복사 함수
     function fallbackCopyTextToClipboard(text) {
@@ -336,8 +342,10 @@ function goToStart() {
         return;
       }
 
-      const shareText = `✨ 별난별 타로카드 ✨\n\n오늘의 운세:\n${selectedCardData.message}\n\n당신도 운세를 확인해보세요!\n https://kimjiwoow.github.io/-/`;
+      // 공유 버튼 클릭 이벤트 기록
+      trackEvent('공유하기 버튼 클릭');
 
+      const shareText = `✨ 별난별 타로카드 ✨\n\n오늘의 운세:\n${selectedCardData.message}\n\n당신도 운세를 확인해보세요!\n https://kimjiwoow.github.io/-/`;
 
       try {
         // 공유 이미지 생성
@@ -356,6 +364,7 @@ function goToStart() {
               text: shareText,
               files: [file]
             });
+            trackEvent('공유 성공', { 방식: '모바일 웹공유' });
             return;
           } catch (error) {
             // 파일 공유 실패 시 텍스트만 공유
@@ -364,6 +373,7 @@ function goToStart() {
                 title: '별난별 타로카드',
                 text: shareText
               });
+              trackEvent('공유 성공', { 방식: '모바일 텍스트공유' });
               return;
             } catch (textShareError) {
               console.log('웹 공유 API 실패, 클립보드 복사로 전환');
@@ -384,9 +394,11 @@ function goToStart() {
           document.body.removeChild(link);
           
           alert('✅ 운세 내용이 클립보드에 복사되고\n이미지가 다운로드되었습니다!');
+          trackEvent('공유 성공', { 방식: '클립보드+다운로드' });
         } else {
           // 클립보드 복사도 실패한 경우
           alert('📋 복사 기능을 사용할 수 없어 텍스트를 표시합니다:\n\n' + shareText);
+          trackEvent('공유 실패', { 이유: '클립보드 복사 불가' });
         }
         
       } catch (error) {
@@ -395,35 +407,44 @@ function goToStart() {
         const copySuccess = await copyToClipboard(shareText);
         if (copySuccess) {
           alert('✅ 운세 내용이 클립보드에 복사되었습니다!');
+          trackEvent('공유 성공', { 방식: '클립보드만' });
         } else {
           alert('📋 공유 내용:\n\n' + shareText);
+          trackEvent('공유 실패', { 이유: '모든 방식 실패' });
         }
       }
     }
-function trackClick(eventName) {
-  fetch("https://script.google.com/macros/s/AKfycbx6_1kFF7a0HaDFVaS1TrQ3g6IbkpKWTsPi8obx3b7vVaFPhmhXvUd84mnQzJuDIW7oQw/exec", {
-    method: "POST",
-    body: JSON.stringify({
-      event: eventName,  // 이벤트 이름 (예: '버튼 클릭')
-      ua: navigator.userAgent  // 사용자 에이전트 정보
-    }),
-    headers: {
-      "Content-Type": "application/json"
+
+    // 개선된 이벤트 추적 함수
+    function trackEvent(eventName, additionalData = {}) {
+      const logData = {
+        event: eventName,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        referrer: document.referrer || 'direct',
+        ...additionalData
+      };
+
+      // 콘솔에 로그 출력 (디버깅용)
+      console.log('📊 이벤트 로그:', logData);
+
+      // Google Apps Script로 전송
+      fetch("https://script.google.com/macros/s/AKfycbx6_1kFF7a0HaDFVaS1TrQ3g6IbkpKWTsPi8obx3b7vVaFPhmhXvUd84mnQzJuDIW7oQw/exec", {
+        method: "POST",
+        mode: "no-cors", // CORS 문제 해결
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(logData)
+      })
+      .then(() => {
+        console.log("✅ 이벤트 로그 전송 완료:", eventName);
+      })
+      .catch(err => {
+        console.error("❌ 이벤트 로그 전송 실패:", err);
+      });
     }
-  })
-  .then(res => res.json())  // 응답을 JSON으로 처리
-  .then(data => {
-    console.log("✅ Logged:", data);  // 성공적으로 기록됨
-    alert("데이터가 성공적으로 기록되었습니다.");
-  })
-  .catch(err => {
-    console.error("❌ Logging failed:", err);  // 오류 발생 시
-    alert("데이터 기록에 실패했습니다.");
-  });
-}
-
-
   </script>
 </body>
 </html>
-
