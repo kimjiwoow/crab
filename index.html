@@ -399,22 +399,23 @@ function goToStart() {
         }
       }
     }
-    <script>
 function trackClick(eventName) {
-  fetch("https://script.google.com/macros/s/AKfycbwaJ20-eLiwd9dJKMLNWfJeonvp8YDzbOz0i_yCT8QpCgytW7al9qUAno89gizL3AvXKQ/exec", {
+  // Google Apps Script의 웹 앱 URL로 데이터를 POST 요청
+  fetch("https://script.google.com/macros/s/AKfycbx6_1kFF7a0HaDFVaS1TrQ3g6IbkpKWTsPi8obx3b7vVaFPhmhXvUd84mnQzJuDIW7oQw/exec", {
     method: "POST",
     body: JSON.stringify({
-      event: eventName,
-      ua: navigator.userAgent
+      event: eventName,             // 이벤트 이름 (예: 클릭한 버튼 이름)
+      ua: navigator.userAgent       // 사용자 에이전트 (브라우저 정보)
     }),
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json"   // 요청 본문 형식
     }
   })
-  .then(res => res.json())
-  .then(data => console.log("✅ Logged:", data))
-  .catch(err => console.error("❌ Logging failed:", err));
+  .then(res => res.json())   // 응답을 JSON으로 처리
+  .then(data => console.log("✅ Logged:", data))   // 서버에서 응답 받은 데이터 출력
+  .catch(err => console.error("❌ Logging failed:", err));  // 에러 발생 시 출력
 }
+
 
   </script>
 </body>
