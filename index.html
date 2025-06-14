@@ -200,8 +200,11 @@
         });
         
         const result = await response.text();
+        console.log('로그 전송 성공:', result);
         
       } catch (error) {
+        console.log('일반 요청 실패, no-cors로 재시도:', error);
+        
         // CORS 오류 시 no-cors로 재시도
         try {
           await fetch(BEHAVIOR_LOG_URL, {
@@ -210,8 +213,9 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(logData)
           });
+          console.log('no-cors 요청 전송 완료');
         } catch (noCorsError) {
-          // 조용히 실패
+          console.error('로그 전송 실패:', noCorsError);
         }
       }
     }
@@ -361,6 +365,7 @@
           await navigator.clipboard.writeText(text);
           return true;
         } catch (err) {
+          console.log('navigator.clipboard 실패, fallback 시도');
           return fallbackCopyTextToClipboard(text);
         }
       } else {
@@ -403,7 +408,7 @@
               sendBehaviorLog('공유_성공_모바일텍스트공유');
               return;
             } catch (textShareError) {
-              // 웹 공유 API 실패 시 클립보드 복사로 전환
+              console.log('웹 공유 API 실패, 클립보드 복사로 전환');
             }
           }
         }
@@ -426,6 +431,7 @@
         }
         
       } catch (error) {
+        console.error('공유 중 오류:', error);
         const copySuccess = await copyToClipboard(shareText);
         if (copySuccess) {
           alert('✅ 운세 내용이 클립보드에 복사되었습니다!');
