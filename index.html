@@ -124,22 +124,10 @@
       top: -9999px;
     }
 
-    /* 로그 상태 표시 */
-    .log-status {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 8px 12px;
-      border-radius: 5px;
-      font-size: 12px;
-      z-index: 1000;
-    }
+
   </style>
 </head>
 <body>
-  <div class="log-status" id="logStatus">로그 상태: 대기중</div>
-  
   <div class="container">
     <h1>✨ 별난별 타로카드 ✨</h1> <br> 
 
@@ -182,7 +170,6 @@
     <div class="buttons">
       <button class="sub-button" onclick="goToStart()">🏠 처음으로</button>
       <button class="sub-button" onclick="sharePage()">📤 공유하기</button>
-      <button class="sub-button" onclick="testLog()">🔍 로그 테스트</button>
     </div>
   </div>
 
@@ -241,20 +228,6 @@
       setTimeout(() => {
         window.location.href = "https://kimjiwoow.github.io/-/";
       }, 500);
-    }
-
-    // 로그 테스트 함수 (디버깅용)
-    function testLog() {
-      updateLogStatus('테스트 시작...');
-      sendBehaviorLog('테스트_버튼_클릭');
-    }
-
-    // 로그 상태 업데이트
-    function updateLogStatus(message) {
-      const logStatus = document.getElementById('logStatus');
-      logStatus.textContent = `로그 상태: ${message}`;
-      logStatus.style.color = message.includes('성공') ? 'green' : 
-                           message.includes('실패') ? 'red' : 'black';
     }
 
     async function createShareImage() {
@@ -444,48 +417,6 @@
         sendBehaviorLog('카드선택후_이탈');
       }
     });
-
-    // 개선된 로그 전송 함수
-    async function sendBehaviorLog(action) {
-      const logData = {
-        action: action,
-        hasSelectedCard: hasSelectedCard,
-        selectedCard: selectedCardName
-      };
-      
-      updateLogStatus('전송 중...');
-      
-      try {
-        // 먼저 no-cors 없이 시도
-        const response = await fetch(BEHAVIOR_LOG_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(logData)
-        });
-        
-        const result = await response.text();
-        console.log('로그 전송 성공:', result);
-        updateLogStatus('전송 성공');
-        
-      } catch (error) {
-        console.log('일반 요청 실패, no-cors로 재시도:', error);
-        
-        // CORS 오류 시 no-cors로 재시도
-        try {
-          await fetch(BEHAVIOR_LOG_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(logData)
-          });
-          console.log('no-cors 요청 전송 완료');
-          updateLogStatus('전송 완료 (no-cors)');
-        } catch (noCorsError) {
-          console.error('로그 전송 실패:', noCorsError);
-          updateLogStatus('전송 실패');
-        }
-      }
-    }
   </script>
 </body>
 </html>
