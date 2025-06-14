@@ -123,6 +123,8 @@
       left: -9999px;
       top: -9999px;
     }
+
+
   </style>
 </head>
 <body>
@@ -175,7 +177,7 @@
   <canvas id="shareCanvas" width="600" height="900"></canvas>
 
   <script>
-    // === 전역 변수 === 
+    // 행동 로깅 API URL
     const BEHAVIOR_LOG_URL = 'https://script.google.com/macros/s/AKfycbxtMKTALtx6IWOwsuy9q2TmKRCH3A61xWsaYbkT9OuTEjb9tCraWr5mfnq_slLgxIt29Q/exec';
     
     let selectedCard = null;
@@ -183,44 +185,11 @@
     let hasSelectedCard = false;
     let selectedCardName = '';
 
-    // === 로그 전송 함수 (가장 먼저 정의) ===
-    async function sendBehaviorLog(action) {
-      const logData = {
-        action: action,
-        hasSelectedCard: hasSelectedCard,
-        selectedCard: selectedCardName
-      };
-      
-      try {
-        // 먼저 일반 요청 시도
-        const response = await fetch(BEHAVIOR_LOG_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(logData)
-        });
-        
-        const result = await response.text();
-        console.log('로그 전송 성공:', result);
-        
-      } catch (error) {
-        console.log('일반 요청 실패, no-cors로 재시도:', error);
-        
-        // CORS 오류 시 no-cors로 재시도
-        try {
-          await fetch(BEHAVIOR_LOG_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(logData)
-          });
-          console.log('no-cors 요청 전송 완료');
-        } catch (noCorsError) {
-          console.error('로그 전송 실패:', noCorsError);
-        }
-      }
-    }
+    // 페이지 로드 시 로그
+    document.addEventListener('DOMContentLoaded', function() {
+      sendBehaviorLog('페이지_방문');
+    });
 
-    // === 카드 관련 함수 ===
     function flipCard(card, cardName) {
       const isFlipped = card.classList.contains('flipped');
 
@@ -254,7 +223,6 @@
       });
     }
 
-    // === 버튼 함수 ===
     function goToStart() {
       sendBehaviorLog('처음으로_버튼_클릭');
       setTimeout(() => {
@@ -262,7 +230,20 @@
       }, 500);
     }
 
-    // === 공유 관련 함수 ===
+    // 로그 테스트 함수 (디버깅용)
+    function testLog() {
+      updateLogStatus('테스트 시작...');
+      sendBehaviorLog('테스트_버튼_클릭');
+    }
+
+    // 로그 상태 업데이트
+    function updateLogStatus(message) {
+      const logStatus = document.getElementById('logStatus');
+      logStatus.textContent = `로그 상태: ${message}`;
+      logStatus.style.color = message.includes('성공') ? 'green' : 
+                           message.includes('실패') ? 'red' : 'black';
+    }
+
     async function createShareImage() {
       if (!selectedCardData) return null;
 
@@ -443,13 +424,6 @@
       }
     }
 
-    // === 이벤트 리스너 (마지막에 등록) ===
-    // 페이지 로드 시 로그
-    document.addEventListener('DOMContentLoaded', function() {
-      sendBehaviorLog('페이지_방문');
-    });
-
-    // 페이지 이탈 시 로그
     window.addEventListener('beforeunload', function() {
       if (!hasSelectedCard) {
         sendBehaviorLog('카드선택없이_이탈');
@@ -457,6 +431,47 @@
         sendBehaviorLog('카드선택후_이탈');
       }
     });
+
+    // 개선된 로그 전송 함수
+    async function sendBehaviorLog(action) {
+      const logData = {
+        action: action,
+        hasSelectedCard: hasSelectedCard,
+        selectedCard: selectedCardName
+      };
+      
+      updateLogStatus('전송 중...');
+      
+      try {
+        // 먼저 no-cors 없이 시도
+        const response = await fetch(BEHAVIOR_LOG_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(logData)
+        });
+        
+        const result = await response.text();
+        console.log('로그 전송 성공:', result);
+        updateLogStatus('전송 성공');
+        
+      } catch (error) {
+        console.log('일반 요청 실패, no-cors로 재시도:', error);
+        
+        // CORS 오류 시 no-cors로 재시도
+        try {
+          await fetch(BEHAVIOR_LOG_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(logData)
+          });
+          console.log('no-cors 요청 전송 완료');
+          updateLogStatus('전송 완료 (no-cors)');
+        } catch (noCorsError) {
+          console.error('로그 전송 실패:', noCorsError);
+          updateLogStatus('전송 실패');
+        }
+      }
+    }
   </script>
 </body>
-</html>
