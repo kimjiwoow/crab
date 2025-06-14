@@ -171,16 +171,21 @@
     </div>
   </div>
 
-  <!-- 공유용 이미지 생성을 위한 숨겨진 캔버스 -->
-  <canvas id="shareCanvas" width="400" height="600"></canvas>
+  <!-- 공유용 이미지 생성을 위한 숨겨진 캔버스 (카드 비율) -->
+  <canvas id="shareCanvas" width="600" height="900"></canvas>
 
   <script>
+    // 행동 로깅 API URL
+    const BEHAVIOR_LOG_URL = 'https://script.google.com/macros/s/AKfycbzbYIXHnkeb_1ecsL2dZlvwpt2lnnXZQ1bx_d8xMTiS6q8SUjwhVZv9YugO4FMQzKJ0vw/exec';
+    
     let selectedCard = null;
     let selectedCardData = null;
+    let hasSelectedCard = false;
+    let selectedCardName = '';
 
-    // 페이지 로드 시 방문 기록
+    // 페이지 로드 시 로그
     document.addEventListener('DOMContentLoaded', function() {
-      trackEvent('페이지 방문');
+      sendBehaviorLog('페이지_방문');
     });
 
     function flipCard(card, cardName) {
@@ -193,10 +198,12 @@
           message: card.dataset.message.replace(/&#10;/g, '\n'),
           image: card.dataset.image
         };
+        hasSelectedCard = true;
+        selectedCardName = cardName;
         disableOtherCards(card);
         
-        // 카드 선택 이벤트 기록
-        trackEvent('카드 선택', { 카드명: cardName });
+        // 카드 선택 로그
+        sendBehaviorLog('카드_선택');
       } else if (card === selectedCard) {
         card.classList.toggle('flipped');
       } else {
@@ -215,7 +222,7 @@
     }
 
     function goToStart() {
-      trackEvent('처음으로 버튼 클릭');
+      sendBehaviorLog('처음으로_버튼_클릭');
       setTimeout(() => {
         window.location.href = "https://kimjiwoow.github.io/-/";
       }, 500); // 로그 전송 후 이동
@@ -227,62 +234,61 @@
       const canvas = document.getElementById('shareCanvas');
       const ctx = canvas.getContext('2d');
       
-      // 배경 그라디언트
-      const gradient = ctx.createLinearGradient(0, 0, 400, 600);
-      gradient.addColorStop(0, '#2d1b69');
-      gradient.addColorStop(1, '#e9dbf2');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, 400, 600);
-
-      // 제목
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 24px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('✨ 별난별 타로카드 ✨', 200, 50);
+      // 고화질 설정
+      const pixelRatio = window.devicePixelRatio || 1;
+      canvas.width = 600 * pixelRatio;
+      canvas.height = 900 * pixelRatio;
+      ctx.scale(pixelRatio, pixelRatio);
+      
+      // 투명 배경 (배경 없음)
+      ctx.clearRect(0, 0, 600, 900);
 
       return new Promise((resolve) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = function() {
-          // 카드 이미지 그리기
-          const cardX = 100;
-          const cardY = 80;
-          const cardWidth = 200;
-          const cardHeight = 300;
+          // 카드 이미지 그리기 (상단에 배치)
+          const cardX = 50;
+          const cardY = 50;
+          const cardWidth = 500;
+          const cardHeight = 600;
           
           ctx.drawImage(img, cardX, cardY, cardWidth, cardHeight);
 
-          // 테두리
-          ctx.strokeStyle = 'white';
+          // 메시지 박스 (카드 아래)
+          const msgX = 50;
+          const msgY = 680;
+          const msgWidth = 500;
+          const msgHeight = 170;
+          
+          // 메시지 배경 (반투명 흰색)
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+          ctx.fillRect(msgX, msgY, msgWidth, msgHeight);
+          
+          // 메시지 테두리
+          ctx.strokeStyle = '#2d1b69';
           ctx.lineWidth = 3;
-          ctx.strokeRect(cardX, cardY, cardWidth, cardHeight);
-
-          // 메시지 배경
-          ctx.fillStyle = 'rgba(45, 42, 74, 0.9)';
-          ctx.fillRect(50, 400, 300, 120);
-          ctx.strokeStyle = 'white';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(50, 400, 300, 120);
+          ctx.strokeRect(msgX, msgY, msgWidth, msgHeight);
 
           // 메시지 텍스트
-          ctx.fillStyle = 'white';
-          ctx.font = '16px Arial';
+          ctx.fillStyle = '#2d1b69';
+          ctx.font = 'bold 28px Arial';
           ctx.textAlign = 'center';
           
           const lines = selectedCardData.message.split('\n');
-          const lineHeight = 25;
-          const startY = 430;
+          const lineHeight = 40;
+          const startY = 720;
           
           lines.forEach((line, index) => {
-            ctx.fillText(line, 200, startY + (index * lineHeight));
+            ctx.fillText(line, 300, startY + (index * lineHeight));
           });
 
-          // 하단 텍스트
-          ctx.font = '14px Arial';
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-          ctx.fillText('오늘의 운세를 확인해보세요!', 200, 560);
+          // 하단 로고/텍스트 (작게)
+          ctx.font = '20px Arial';
+          ctx.fillStyle = '#666666';
+          ctx.fillText('✨ 별난별 타로카드 ✨', 300, 820);
 
-          resolve(canvas.toDataURL('image/png'));
+          resolve(canvas.toDataURL('image/png', 1.0)); // 최고 품질
         };
         img.src = selectedCardData.image;
       });
@@ -342,8 +348,8 @@
         return;
       }
 
-      // 공유 버튼 클릭 이벤트 기록
-      trackEvent('공유하기 버튼 클릭');
+      // 공유 버튼 클릭 로그
+      sendBehaviorLog('공유하기_버튼_클릭');
 
       const shareText = `✨ 별난별 타로카드 ✨\n\n오늘의 운세:\n${selectedCardData.message}\n\n당신도 운세를 확인해보세요!\n https://kimjiwoow.github.io/-/`;
 
@@ -364,7 +370,7 @@
               text: shareText,
               files: [file]
             });
-            trackEvent('공유 성공', { 방식: '모바일 웹공유' });
+            sendBehaviorLog('공유_성공_모바일웹공유');
             return;
           } catch (error) {
             // 파일 공유 실패 시 텍스트만 공유
@@ -373,7 +379,7 @@
                 title: '별난별 타로카드',
                 text: shareText
               });
-              trackEvent('공유 성공', { 방식: '모바일 텍스트공유' });
+              sendBehaviorLog('공유_성공_모바일텍스트공유');
               return;
             } catch (textShareError) {
               console.log('웹 공유 API 실패, 클립보드 복사로 전환');
@@ -394,11 +400,11 @@
           document.body.removeChild(link);
           
           alert('✅ 운세 내용이 클립보드에 복사되고\n이미지가 다운로드되었습니다!');
-          trackEvent('공유 성공', { 방식: '클립보드+다운로드' });
+          sendBehaviorLog('공유_성공_클립보드다운로드');
         } else {
           // 클립보드 복사도 실패한 경우
           alert('📋 복사 기능을 사용할 수 없어 텍스트를 표시합니다:\n\n' + shareText);
-          trackEvent('공유 실패', { 이유: '클립보드 복사 불가' });
+          sendBehaviorLog('공유_실패_클립보드불가');
         }
         
       } catch (error) {
@@ -407,43 +413,37 @@
         const copySuccess = await copyToClipboard(shareText);
         if (copySuccess) {
           alert('✅ 운세 내용이 클립보드에 복사되었습니다!');
-          trackEvent('공유 성공', { 방식: '클립보드만' });
+          sendBehaviorLog('공유_성공_클립보드만');
         } else {
           alert('📋 공유 내용:\n\n' + shareText);
-          trackEvent('공유 실패', { 이유: '모든 방식 실패' });
+          sendBehaviorLog('공유_실패_모든방식실패');
         }
       }
     }
 
-    // 개선된 이벤트 추적 함수
-    function trackEvent(eventName, additionalData = {}) {
+    // 페이지 이탈 시 로그
+    window.addEventListener('beforeunload', function() {
+      if (!hasSelectedCard) {
+        sendBehaviorLog('카드선택없이_이탈');
+      } else {
+        sendBehaviorLog('카드선택후_이탈');
+      }
+    });
+
+    // 행동 로그 전송 함수
+    function sendBehaviorLog(action) {
       const logData = {
-        event: eventName,
-        timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent,
-        url: window.location.href,
-        referrer: document.referrer || 'direct',
-        ...additionalData
+        action: action,
+        hasSelectedCard: hasSelectedCard,
+        selectedCard: selectedCardName
       };
-
-      // 콘솔에 로그 출력 (디버깅용)
-      console.log('📊 이벤트 로그:', logData);
-
-      // Google Apps Script로 전송
-      fetch("https://script.google.com/macros/s/AKfycbx6_1kFF7a0HaDFVaS1TrQ3g6IbkpKWTsPi8obx3b7vVaFPhmhXvUd84mnQzJuDIW7oQw/exec", {
-        method: "POST",
-        mode: "no-cors", // CORS 문제 해결
-        headers: {
-          "Content-Type": "application/json"
-        },
+      
+      fetch(BEHAVIOR_LOG_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(logData)
-      })
-      .then(() => {
-        console.log("✅ 이벤트 로그 전송 완료:", eventName);
-      })
-      .catch(err => {
-        console.error("❌ 이벤트 로그 전송 실패:", err);
-      });
+      }).catch(err => console.log('로그 전송 실패:', err));
     }
   </script>
 </body>
