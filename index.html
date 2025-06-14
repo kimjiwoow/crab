@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>별난별 타로카드</title>
- 
   <style>
     html, body {
       height: 100%;
@@ -117,7 +116,6 @@
       transform: translateY(-1px);
     }
 
-    /* 공유용 캔버스는 화면에서 숨김 */
     #shareCanvas {
       position: absolute;
       left: -9999px;
@@ -127,130 +125,44 @@
 </head>
 <body>
   <div class="container">
-    <h1>✨ 별난별 타로카드 ✨</h1> <br> 
-
+    <h1>✨ 별난별 타로카드 ✨</h1>
     <div class="tarot-container">
-      <div class="card" onclick="flipCard(this, '카드1')" data-message="새로운 인연이 다가옵니다.&#10;마음을 열고 기다려보세요." data-image="https://i.imgur.com/HRZrNvm.png">
+      <div class="card" onclick="flipCard(this, '카드1')" data-message="새로운 인연이 다가옵니다.
+마음을 열고 기다려보세요." data-image="https://i.imgur.com/HRZrNvm.png">
         <div class="card-inner">
           <div class="card-front">
             <img src="https://i.imgur.com/HRZrNvm.png" alt="카드1 앞면">
           </div>
-          <div class="card-back">
-            새로운 인연이 다가옵니다.
-            마음을 열고 기다려보세요.
-          </div>
-        </div>
-      </div>
-      <div class="card" onclick="flipCard(this, '카드2')" data-message="행운지수가 상승하였습니다!&#10;예상치 못했던 수입이 들어올 수도 있습니다." data-image="https://i.imgur.com/NMbruAt.png">
-        <div class="card-inner">
-          <div class="card-front">
-            <img src="https://i.imgur.com/NMbruAt.png" alt="카드2 앞면">
-          </div>
-          <div class="card-back">
-            행운지수가 상승하였습니다!
-            예상치 못했던 수입이 들어올 수도 있습니다.
-          </div>
-        </div>
-      </div>
-      <div class="card" onclick="flipCard(this, '카드3')" data-message="발 밑만 보며 걷다보면 예상치 못한 길로 갈 수 있습니다.&#10;멀리 보고 진행하시길!" data-image="https://i.imgur.com/OZB4t3N.png">
-        <div class="card-inner">
-          <div class="card-front">
-            <img src="https://i.imgur.com/OZB4t3N.png" alt="카드3 앞면">
-          </div>
-          <div class="card-back">
-            발 밑만 보며 걷다보면 예상치 못한 길로 갈 수 있습니다.
-            멀리 보고 진행하시길!
-          </div>
+          <div class="card-back">새로운 인연이 다가옵니다.
+마음을 열고 기다려보세요.</div>
         </div>
       </div>
     </div>
-
     <div class="buttons">
       <button class="sub-button" onclick="goToStart()">🏠 처음으로</button>
       <button class="sub-button" onclick="sharePage()">📤 공유하기</button>
     </div>
   </div>
-
-  <!-- 공유용 이미지 생성을 위한 숨겨진 캔버스 (카드 비율) -->
   <canvas id="shareCanvas" width="600" height="900"></canvas>
-
   <script>
-    // === 전역 변수 === 
-    const BEHAVIOR_LOG_URL = 'https://script.google.com/macros/s/AKfycbxtMKTALtx6IWOwsuy9q2TmKRCH3A61xWsaYbkT9OuTEjb9tCraWr5mfnq_slLgxIt29Q/exec';
-    
+    const BEHAVIOR_LOG_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_ID/exec';
     let selectedCard = null;
     let selectedCardData = null;
-    let hasSelectedCard = false;
     let selectedCardName = '';
 
-    // === 로그 전송 함수 (가장 먼저 정의) ===
-    async function sendBehaviorLog(action) {
-      const logData = {
-        action: action,
-        hasSelectedCard: hasSelectedCard,
-        selectedCard: selectedCardName
-      };
-      
-      try {
-        // 먼저 일반 요청 시도
-        const response = await fetch(BEHAVIOR_LOG_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(logData)
-        });
-        
-        const result = await response.text();
-        
-      } catch (error) {
-        // CORS 오류 시 no-cors로 재시도
-        try {
-          await fetch(BEHAVIOR_LOG_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(logData)
-          });
-        } catch (noCorsError) {
-          // 조용히 실패
-        }
-      }
-    }
-
-    // === 카드 관련 함수 ===
     function flipCard(card, cardName) {
-      const isFlipped = card.classList.contains('flipped');
-
       if (!selectedCard) {
-        card.classList.toggle('flipped');
+        card.classList.add('flipped');
         selectedCard = card;
         selectedCardData = {
-          message: card.dataset.message.replace(/&#10;/g, '\n'),
+          message: card.dataset.message,
           image: card.dataset.image
         };
-        hasSelectedCard = true;
         selectedCardName = cardName;
-        disableOtherCards(card);
-        
-        // 카드 선택 로그
         sendBehaviorLog('카드_선택');
-      } else if (card === selectedCard) {
-        card.classList.toggle('flipped');
-      } else {
-        alert("하루에 한 번만 뽑을 수 있습니다!\n다시 뽑고 싶으시다면, 처음으로 버튼을 클릭해주세요!");
       }
     }
 
-    function disableOtherCards(exceptCard) {
-      document.querySelectorAll('.card').forEach(card => {
-        if (card !== exceptCard) {
-          card.onclick = () => {
-            alert("하루에 한 번만 뽑을 수 있습니다.\n다시 뽑고 싶으시다면, 처음으로 버튼을 클릭해주세요!");
-          };
-        }
-      });
-    }
-
-    // === 버튼 함수 ===
     function goToStart() {
       sendBehaviorLog('처음으로_버튼_클릭');
       setTimeout(() => {
@@ -258,199 +170,21 @@
       }, 500);
     }
 
-    // === 공유 관련 함수 ===
-    async function createShareImage() {
-      if (!selectedCardData) return null;
-
-      const canvas = document.getElementById('shareCanvas');
-      const ctx = canvas.getContext('2d');
-      
-      // 고화질 설정
-      const pixelRatio = window.devicePixelRatio || 1;
-      canvas.width = 600 * pixelRatio;
-      canvas.height = 900 * pixelRatio;
-      ctx.scale(pixelRatio, pixelRatio);
-      
-      // 투명 배경 (배경 없음)
-      ctx.clearRect(0, 0, 600, 900);
-
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = function() {
-          // 카드 이미지 그리기 (상단에 배치)
-          const cardX = 50;
-          const cardY = 50;
-          const cardWidth = 500;
-          const cardHeight = 600;
-          
-          ctx.drawImage(img, cardX, cardY, cardWidth, cardHeight);
-
-          // 메시지 박스 (카드 아래)
-          const msgX = 50;
-          const msgY = 680;
-          const msgWidth = 500;
-          const msgHeight = 170;
-          
-          // 메시지 배경 (반투명 흰색)
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-          ctx.fillRect(msgX, msgY, msgWidth, msgHeight);
-          
-          // 메시지 테두리
-          ctx.strokeStyle = '#2d1b69';
-          ctx.lineWidth = 3;
-          ctx.strokeRect(msgX, msgY, msgWidth, msgHeight);
-
-          // 메시지 텍스트
-          ctx.fillStyle = '#2d1b69';
-          ctx.font = 'bold 28px Arial';
-          ctx.textAlign = 'center';
-          
-          const lines = selectedCardData.message.split('\n');
-          const lineHeight = 40;
-          const startY = 720;
-          
-          lines.forEach((line, index) => {
-            ctx.fillText(line, 300, startY + (index * lineHeight));
-          });
-
-          // 하단 로고/텍스트 (작게)
-          ctx.font = '20px Arial';
-          ctx.fillStyle = '#666666';
-          ctx.fillText('✨ 별난별 타로카드 ✨', 300, 820);
-
-          resolve(canvas.toDataURL('image/png', 1.0));
-        };
-        img.src = selectedCardData.image;
-      });
-    }
-
-    // 구식 브라우저용 클립보드 복사 함수
-    function fallbackCopyTextToClipboard(text) {
-      const textArea = document.createElement("textarea");
-      textArea.value = text;
-      
-      textArea.style.position = "fixed";
-      textArea.style.top = "-1000px";
-      textArea.style.left = "-1000px";
-      textArea.style.width = "2em";
-      textArea.style.height = "2em";
-      textArea.style.padding = "0";
-      textArea.style.border = "none";
-      textArea.style.outline = "none";
-      textArea.style.boxShadow = "none";
-      textArea.style.background = "transparent";
-      
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      
+    async function sendBehaviorLog(action) {
+      const logData = {
+        action: action,
+        selectedCard: selectedCardName
+      };
       try {
-        const successful = document.execCommand('copy');
-        document.body.removeChild(textArea);
-        return successful;
-      } catch (err) {
-        document.body.removeChild(textArea);
-        return false;
+        await fetch(BEHAVIOR_LOG_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(logData)
+        });
+      } catch (e) {
+        console.error('로깅 실패:', e);
       }
     }
-
-    async function copyToClipboard(text) {
-      if (navigator.clipboard && window.isSecureContext) {
-        try {
-          await navigator.clipboard.writeText(text);
-          return true;
-        } catch (err) {
-          return fallbackCopyTextToClipboard(text);
-        }
-      } else {
-        return fallbackCopyTextToClipboard(text);
-      }
-    }
-
-    async function sharePage() {
-      if (!selectedCardData) {
-        alert('먼저 카드를 뽑아주세요!');
-        return;
-      }
-
-      sendBehaviorLog('공유하기_버튼_클릭');
-
-      const shareText = `✨ 별난별 타로카드 ✨\n\n오늘의 운세:\n${selectedCardData.message}\n\n당신도 운세를 확인해보세요!\n https://kimjiwoow.github.io/-/`;
-
-      try {
-        const shareImageUrl = await createShareImage();
-        
-        if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-          try {
-            const response = await fetch(shareImageUrl);
-            const blob = await response.blob();
-            const file = new File([blob], 'tarot-result.png', { type: 'image/png' });
-            
-            await navigator.share({
-              title: '별난별 타로카드',
-              text: shareText,
-              files: [file]
-            });
-            sendBehaviorLog('공유_성공_모바일웹공유');
-            return;
-          } catch (error) {
-            try {
-              await navigator.share({
-                title: '별난별 타로카드',
-                text: shareText
-              });
-              sendBehaviorLog('공유_성공_모바일텍스트공유');
-              return;
-            } catch (textShareError) {
-              // 웹 공유 API 실패 시 클립보드 복사로 전환
-            }
-          }
-        }
-        
-        const copySuccess = await copyToClipboard(shareText);
-        
-        if (copySuccess) {
-          const link = document.createElement('a');
-          link.download = 'tarot-result.png';
-          link.href = shareImageUrl;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          alert('✅ 운세 내용이 클립보드에 복사되고\n이미지가 다운로드되었습니다!');
-          sendBehaviorLog('공유_성공_클립보드다운로드');
-        } else {
-          alert('📋 복사 기능을 사용할 수 없어 텍스트를 표시합니다:\n\n' + shareText);
-          sendBehaviorLog('공유_실패_클립보드불가');
-        }
-        
-      } catch (error) {
-        const copySuccess = await copyToClipboard(shareText);
-        if (copySuccess) {
-          alert('✅ 운세 내용이 클립보드에 복사되었습니다!');
-          sendBehaviorLog('공유_성공_클립보드만');
-        } else {
-          alert('📋 공유 내용:\n\n' + shareText);
-          sendBehaviorLog('공유_실패_모든방식실패');
-        }
-      }
-    }
-
-    // === 이벤트 리스너 (마지막에 등록) ===
-    // 페이지 로드 시 로그
-    document.addEventListener('DOMContentLoaded', function() {
-      sendBehaviorLog('페이지_방문');
-    });
-
-    // 페이지 이탈 시 로그
-    window.addEventListener('beforeunload', function() {
-      if (!hasSelectedCard) {
-        sendBehaviorLog('카드선택없이_이탈');
-      } else {
-        sendBehaviorLog('카드선택후_이탈');
-      }
-    });
   </script>
 </body>
 </html>
