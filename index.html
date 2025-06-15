@@ -416,31 +416,38 @@
       }
     });
 
-    // 깔끔한 로그 전송 함수 (sendBeacon만 사용)
+    // 디버깅용 상세 로그 전송 함수
     async function sendBehaviorLog(action) {
       const logData = {
         action: action,
         hasSelectedCard: hasSelectedCard,
         selectedCard: selectedCardName,
         timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent
+        userAgent: navigator.userAgent,
+        currentURL: window.location.href
       };
       
+      console.log('🔍 전송할 로그:', logData);
+      console.log('📡 GAS URL:', BEHAVIOR_LOG_URL);
+      
       try {
-        // sendBeacon만 사용 (CORS 문제 없고 안전함)
+        // sendBeacon만 사용
         if (navigator.sendBeacon) {
           const blob = new Blob([JSON.stringify(logData)], { type: 'application/json' });
           const result = navigator.sendBeacon(BEHAVIOR_LOG_URL, blob);
           if (result) {
-            console.log('✅ 로그 전송 성공');
+            console.log('✅ sendBeacon 전송 성공 - 브라우저가 데이터를 받았음');
+            console.log('💡 만약 시트에 기록이 안 되면 GAS 설정 확인 필요');
             return;
+          } else {
+            console.log('❌ sendBeacon 전송 실패');
           }
+        } else {
+          console.log('⚠️ sendBeacon 미지원 브라우저');
         }
         
-        console.log('⚠️ sendBeacon 미지원 브라우저');
-        
       } catch (error) {
-        console.log('❌ 로그 전송 실패:', error.message);
+        console.log('❌ 로그 전송 에러:', error.message);
       }
     }
   </script>
