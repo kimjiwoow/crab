@@ -346,7 +346,7 @@
 
       sendBehaviorLog('공유하기_버튼_클릭');
 
-      const shareText = `✨ 별난별 타로카드 ✨\n\n오늘의 운세:\n${selectedCardData.message}\n\n당신도 운세를 확인해보세요!\n https://kimjiwoow.github.io/-/`;
+      const shareText = `✨ 별난별 타로카드 ✨\n\n오늘의 운세:\n${selectedCardData.message}\n\n당신도 운세를 확인해보세요!\n https://kimjiwoow.github.io/crab/`;
 
       try {
         const shareImageUrl = await createShareImage();
@@ -416,15 +416,20 @@
       }
     });
 
-    // 깔끔한 로그 전송 함수 (sendBeacon만 사용)
+    // 디버깅을 위한 상세 로그 전송 함수
     async function sendBehaviorLog(action) {
       const logData = {
         action: action,
         hasSelectedCard: hasSelectedCard,
         selectedCard: selectedCardName,
         timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent
+        userAgent: navigator.userAgent,
+        currentURL: window.location.href,
+        origin: window.location.origin
       };
+      
+      console.log('전송할 로그 데이터:', logData);
+      console.log('GAS URL:', BEHAVIOR_LOG_URL);
       
       try {
         // sendBeacon만 사용 (가장 안전하고 CORS 문제 없음)
@@ -432,17 +437,19 @@
           const blob = new Blob([JSON.stringify(logData)], { type: 'application/json' });
           const result = navigator.sendBeacon(BEHAVIOR_LOG_URL, blob);
           if (result) {
-            console.log('로그 전송 성공');
+            console.log('✅ sendBeacon 로그 전송 성공');
             return;
+          } else {
+            console.log('❌ sendBeacon 전송 실패');
           }
         }
         
         // sendBeacon을 지원하지 않는 구형 브라우저용 (거의 없음)
-        console.log('sendBeacon 미지원 브라우저');
+        console.log('⚠️ sendBeacon 미지원 브라우저');
         
       } catch (error) {
         // 에러 발생 시 조용히 처리
-        console.log('로그 전송 실패:', error.message);
+        console.log('❌ 로그 전송 실패:', error.message);
       }
     }
   </script>
