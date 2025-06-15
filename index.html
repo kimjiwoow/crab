@@ -175,7 +175,7 @@
   <canvas id="shareCanvas" width="600" height="900"></canvas>
 
   <script>
-    // 행동 로깅 API URL (업데이트된 GAS URL)
+    // 행동 로깅 API URL (새 배포 URL)
     const BEHAVIOR_LOG_URL = 'https://script.google.com/macros/s/AKfycbxiccCFIhNYQJJ9rDAj5_aUqg2FrNZfw2dUD8Q44JG9qYd93S6wr7Av0X8oGDFhG81MAg/exec';
     
     let selectedCard = null;
@@ -416,7 +416,7 @@
       }
     });
 
-    // 디버깅용 상세 로그 전송 함수
+    // 강력한 디버깅용 로그 전송 함수
     async function sendBehaviorLog(action) {
       const logData = {
         action: action,
@@ -427,28 +427,44 @@
         currentURL: window.location.href
       };
       
-      console.log('🔍 전송할 로그:', logData);
+      console.log('🔍 전송할 로그 데이터:', JSON.stringify(logData, null, 2));
       console.log('📡 GAS URL:', BEHAVIOR_LOG_URL);
       
+      // 1. sendBeacon 시도
       try {
-        // sendBeacon만 사용
         if (navigator.sendBeacon) {
           const blob = new Blob([JSON.stringify(logData)], { type: 'application/json' });
           const result = navigator.sendBeacon(BEHAVIOR_LOG_URL, blob);
+          console.log('📤 sendBeacon 결과:', result);
+          
           if (result) {
-            console.log('✅ sendBeacon 전송 성공 - 브라우저가 데이터를 받았음');
-            console.log('💡 만약 시트에 기록이 안 되면 GAS 설정 확인 필요');
-            return;
+            console.log('✅ sendBeacon 전송 성공');
           } else {
             console.log('❌ sendBeacon 전송 실패');
           }
         } else {
-          console.log('⚠️ sendBeacon 미지원 브라우저');
+          console.log('⚠️ sendBeacon 미지원');
         }
-        
       } catch (error) {
-        console.log('❌ 로그 전송 에러:', error.message);
+        console.log('❌ sendBeacon 에러:', error);
       }
+      
+      // 2. 추가 테스트: fetch로도 시도 (CORS 무시하고)
+      try {
+        console.log('🔄 fetch로도 테스트 시도...');
+        const response = await fetch(BEHAVIOR_LOG_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(logData)
+        });
+        console.log('📥 fetch 응답:', response);
+      } catch (fetchError) {
+        console.log('❌ fetch 에러:', fetchError);
+      }
+      
+      // 3. GAS URL 직접 테스트
+      console.log('🌐 브라우저에서 직접 테스트:', BEHAVIOR_LOG_URL);
     }
   </script>
 </body>
