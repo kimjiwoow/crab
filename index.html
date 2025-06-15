@@ -416,40 +416,39 @@
       }
     });
 
-    // 디버깅을 위한 상세 로그 전송 함수
+    // 안전한 로그 전송 함수
     async function sendBehaviorLog(action) {
       const logData = {
         action: action,
         hasSelectedCard: hasSelectedCard,
         selectedCard: selectedCardName,
         timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent,
-        currentURL: window.location.href,
-        origin: window.location.origin
+        userAgent: navigator.userAgent
       };
       
-      console.log('전송할 로그 데이터:', logData);
-      console.log('GAS URL:', BEHAVIOR_LOG_URL);
-      
       try {
-        // sendBeacon만 사용 (가장 안전하고 CORS 문제 없음)
+        // sendBeacon을 우선 사용 (가장 안전)
         if (navigator.sendBeacon) {
           const blob = new Blob([JSON.stringify(logData)], { type: 'application/json' });
           const result = navigator.sendBeacon(BEHAVIOR_LOG_URL, blob);
           if (result) {
-            console.log('✅ sendBeacon 로그 전송 성공');
+            console.log('로그 전송 성공 (sendBeacon)');
             return;
-          } else {
-            console.log('❌ sendBeacon 전송 실패');
           }
         }
         
-        // sendBeacon을 지원하지 않는 구형 브라우저용 (거의 없음)
-        console.log('⚠️ sendBeacon 미지원 브라우저');
+        // sendBeacon 실패 시 fetch 시도
+        await fetch(BEHAVIOR_LOG_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(logData)
+        });
+        console.log('로그 전송 완료 (fetch)');
         
       } catch (error) {
-        // 에러 발생 시 조용히 처리
-        console.log('❌ 로그 전송 실패:', error.message);
+        // 에러가 발생해도 조용히 처리하고 다른 기능에 영향 없음
+        console.log('로그 전송 실패 (무시됨):', error.message);
       }
     }
   </script>
