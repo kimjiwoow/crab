@@ -113,22 +113,22 @@
   <div class="container">
     <h1>✨ 별난별 타로카드 ✨</h1>
     <div class="tarot-container">
-      <div class="card" onclick="flipCard(this, '카드1')" data-message="새로운 인연이 다가옵니다.&#10;마음을 열고 기다려보세요." data-image="https://i.imgur.com/HRZrNvm.png">
+      <div class="card" onclick="flipCard(this, '카드1')" data-message="새로운 인연이 다가옵니다. 마음을 열고 기다려보세요." data-image="https://i.imgur.com/HRZrNvm.png">
         <div class="card-inner">
           <div class="card-front"><img src="https://i.imgur.com/HRZrNvm.png" alt="카드1 앞면"></div>
-          <div class="card-back">새로운 인연이 다가옵니다.\n마음을 열고 기다려보세요.</div>
+          <div class="card-back">새로운 인연이 다가옵니다.<br>마음을 열고 기다려보세요.</div>
         </div>
       </div>
-      <div class="card" onclick="flipCard(this, '카드2')" data-message="행운지수가 상승하였습니다!&#10;예상치 못했던 수입이 들어올 수도 있습니다." data-image="https://i.imgur.com/NMbruAt.png">
+      <div class="card" onclick="flipCard(this, '카드2')" data-message="행운지수가 상승하였습니다! 예상치 못했던 수입이 들어올 수도 있습니다." data-image="https://i.imgur.com/NMbruAt.png">
         <div class="card-inner">
           <div class="card-front"><img src="https://i.imgur.com/NMbruAt.png" alt="카드2 앞면"></div>
-          <div class="card-back">행운지수가 상승하였습니다!\n예상치 못했던 수입이 들어올 수도 있습니다.</div>
+          <div class="card-back">행운지수가 상승하였습니다!<br>예상치 못했던 수입이 들어올 수도 있습니다.</div>
         </div>
       </div>
-      <div class="card" onclick="flipCard(this, '카드3')" data-message="발 밑만 보며 걷다보면 예상치 못한 길로 갈 수 있습니다.&#10;멀리 보고 진행하시길!" data-image="https://i.imgur.com/OZB4t3N.png">
+      <div class="card" onclick="flipCard(this, '카드3')" data-message="발 밑만 보며 걷다보면 예상치 못한 길로 갈 수 있습니다. 멀리 보고 진행하시길!" data-image="https://i.imgur.com/OZB4t3N.png">
         <div class="card-inner">
           <div class="card-front"><img src="https://i.imgur.com/OZB4t3N.png" alt="카드3 앞면"></div>
-          <div class="card-back">발 밑만 보며 걷다보면 예상치 못한 길로 갈 수 있습니다.\n멀리 보고 진행하시길!</div>
+          <div class="card-back">발 밑만 보며 걷다보면 예상치 못한 길로 갈 수 있습니다.<br>멀리 보고 진행하시길!</div>
         </div>
       </div>
     </div>
@@ -139,40 +139,32 @@
   </div>
   <canvas id="shareCanvas" width="600" height="900"></canvas>
   <script>
-    const BEHAVIOR_LOG_URL = 'https://script.google.com/macros/s/AKfycbxtMKTALtx6IWOwsuy9q2TmKRCH3A61xWsaYbkT9OuTEjb9tCraWr5mfnq_slLgxIt29Q/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxtMKTALtx6IWOwsuy9q2TmKRCH3A61xWsaYbkT9OuTEjb9tCraWr5mfnq_slLgxIt29Q/exec';
     let selectedCard = null;
-    let selectedCardData = null;
     let hasSelectedCard = false;
     let selectedCardName = '';
 
-    async function sendBehaviorLog(action) {
-      const logData = { action, hasSelectedCard, selectedCard: selectedCardName };
-      try {
-        const response = await fetch(BEHAVIOR_LOG_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(logData)
-        });
-        const result = await response.text();
-        console.log('✅ 로그 전송:', result);
-      } catch (error) {
-        await fetch(BEHAVIOR_LOG_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(logData)
-        });
-      }
+    function sendBehaviorLog(action) {
+      const logData = {
+        action: action,
+        hasSelectedCard: hasSelectedCard,
+        selectedCard: selectedCardName
+      };
+
+      fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(logData)
+      }).catch(error => {
+        console.log('로그 전송 실패:', error);
+      });
     }
 
     function flipCard(card, cardName) {
       if (!selectedCard) {
         card.classList.toggle('flipped');
         selectedCard = card;
-        selectedCardData = {
-          message: card.dataset.message.replace(/&#10;/g, '\n'),
-          image: card.dataset.image
-        };
         hasSelectedCard = true;
         selectedCardName = cardName;
         disableOtherCards(card);
@@ -197,6 +189,15 @@
       setTimeout(() => {
         window.location.href = "https://kimjiwoow.github.io/-/";
       }, 500);
+    }
+
+    function sharePage() {
+      if (!selectedCardName) {
+        alert('먼저 카드를 뽑아주세요!');
+        return;
+      }
+      sendBehaviorLog('공유하기_버튼_클릭');
+      alert('운세 내용이 클립보드에 복사되었거나, 공유 가능합니다!');
     }
 
     document.addEventListener('DOMContentLoaded', () => sendBehaviorLog('페이지_방문'));
